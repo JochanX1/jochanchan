@@ -58,6 +58,7 @@
             font-family: 'Courier New', monospace;
             letter-spacing: 0.2em;
             margin-bottom: 0.5rem;
+            cursor: pointer;
         }
         
         /* カウントダウンタイマー */
@@ -76,6 +77,7 @@
             letter-spacing: 0.1em;
             min-width: 250px;
             text-align: center;
+            cursor: pointer;
         }
         
         .timer-display.blink {
@@ -202,6 +204,38 @@
         /* 編集コントロールは非表示のまま */
         .edit-controls { display: none; }
         
+        /* 全画面オーバーレイ */
+        .fullscreen-overlay {
+            position: fixed;
+            inset: 0;
+            background: rgba(15, 23, 42, 0.95);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 9999;
+        }
+        
+        .fullscreen-overlay.active {
+            display: flex;
+        }
+        
+        .fullscreen-clock,
+        .fullscreen-timer {
+            font-family: 'Courier New', monospace;
+            font-weight: bold;
+            font-size: clamp(6rem, 20vw, 12rem);
+            letter-spacing: 0.2em;
+            cursor: pointer;
+        }
+        
+        .fullscreen-clock {
+            color: #38bdf8;
+        }
+        
+        .fullscreen-timer {
+            color: #9dff00;
+        }
+        
         /* レスポンシブ対応 */
         @media (max-width: 768px) {
             .container { padding: 1rem; }
@@ -218,10 +252,10 @@
         <div class="header">
             <div class="header-controls">
                 <div>
-                    <div class="clock" id="clock">00:00:00</div>
+                    <div class="clock" id="clock" onclick="toggleClockFullscreen()">00:00:00</div>
                 </div>
                 <div class="timer-container">
-                    <div class="timer-display" id="timerDisplay">00:00</div>
+                    <div class="timer-display" id="timerDisplay" onclick="toggleTimerFullscreen()">00:00</div>
                     <div class="timer-inputs">
                         <input type="number" id="minutesInput" class="timer-input" placeholder="分" min="0" max="99" value="5">
                         <span style="color: #cbd5e1;">分</span>
@@ -270,6 +304,16 @@
         </div>
     </div>
     
+    <!-- 全画面時計 -->
+    <div id="clockOverlay" class="fullscreen-overlay" onclick="toggleClockFullscreen()">
+        <div id="fullscreenClock" class="fullscreen-clock">00:00:00</div>
+    </div>
+
+    <!-- 全画面タイマー -->
+    <div id="timerOverlay" class="fullscreen-overlay" onclick="toggleTimerFullscreen()">
+        <div id="fullscreenTimer" class="fullscreen-timer">00:00</div>
+    </div>
+    
     <script>
         // 時刻更新
         function updateClock() {
@@ -277,7 +321,9 @@
             const hours = String(now.getHours()).padStart(2, '0');
             const minutes = String(now.getMinutes()).padStart(2, '0');
             const seconds = String(now.getSeconds()).padStart(2, '0');
-            document.getElementById('clock').textContent = `${hours}:${minutes}:${seconds}`;
+            const text = `${hours}:${minutes}:${seconds}`;
+            document.getElementById('clock').textContent = text;
+            document.getElementById('fullscreenClock').textContent = text;
         }
         updateClock();
         setInterval(updateClock, 1000);
@@ -292,7 +338,10 @@
             const seconds = timerSeconds % 60;
             const display = `${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
             const dispEl = document.getElementById('timerDisplay');
+            const fullEl = document.getElementById('fullscreenTimer');
             dispEl.textContent = display;
+            fullEl.textContent = display;
+            
             if (timerSeconds === 0 && isTimerRunning) {
                 dispEl.classList.add('blink');
             } else {
@@ -350,6 +399,7 @@
             isTimerRunning = false;
             document.getElementById('startBtn').textContent = '開始';
             document.getElementById('timerDisplay').textContent = '00:00';
+            document.getElementById('fullscreenTimer').textContent = '00:00';
             document.getElementById('timerDisplay').classList.remove('blink');
             const minutesInput = document.getElementById('minutesInput');
             const secondsInput = document.getElementById('secondsInput');
@@ -357,6 +407,32 @@
             secondsInput.disabled = false;
             minutesInput.value = '5';
             secondsInput.value = '0';
+        }
+        
+        // 全画面トグル（時計）
+        let isClockFullscreen = false;
+        function toggleClockFullscreen() {
+            const overlay = document.getElementById('clockOverlay');
+            if (!isClockFullscreen) {
+                overlay.classList.add('active');
+                isClockFullscreen = true;
+            } else {
+                overlay.classList.remove('active');
+                isClockFullscreen = false;
+            }
+        }
+        
+        // 全画面トグル（タイマー）
+        let isTimerFullscreenMode = false;
+        function toggleTimerFullscreen() {
+            const overlay = document.getElementById('timerOverlay');
+            if (!isTimerFullscreenMode) {
+                overlay.classList.add('active');
+                isTimerFullscreenMode = true;
+            } else {
+                overlay.classList.remove('active');
+                isTimerFullscreenMode = false;
+            }
         }
         
         // 初期表示
